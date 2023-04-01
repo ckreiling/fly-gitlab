@@ -1,0 +1,60 @@
+# fly.toml file generated for ckreiling-gitlab on 2023-03-31T18:29:53-04:00
+
+app = "ckreiling-gitlab"
+kill_signal = "SIGINT"
+kill_timeout = 5
+primary_region = "ewr"
+processes = []
+
+[build]
+  image = "gitlab/gitlab-ce"
+
+[env]
+  GITLAB_OMNIBUS_CONFIG = """
+external_url 'https://ckreiling-gitlab.fly.dev'
+nginx['listen_port'] = 80
+nginx['listen_https'] = false
+# add any other gitlab.rb config here"""
+  
+[[mounts]]
+  source = "glab_config"
+  destination = "/etc/gitlab"
+
+[[mounts]]
+  source = "glab_logs"
+  destination = "/var/log/gitlab"
+
+[[mounts]]
+  source = "glab_data"
+  destination = "/var/opt/gitlab"
+
+[[services]]
+  internal_port = 80
+  processes = ["app"]
+  protocol = "tcp"
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+    type = "connections"
+
+  [[services.ports]]
+    force_https = true
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+[[services]]
+  internal_port = 22
+  processes = ["app"]
+  protocol = "tcp"
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+    type = "connections"
+
+  [[services.ports]]
+    port = 22
+
